@@ -22,4 +22,8 @@
 # local_auth (biometric)
 -keep class androidx.biometric.** { *; }
 
+# Flutter deferred components: Play Core classes are referenced by the
+# embedding but unused (no deferred components) — safe to ignore for R8.
+-dontwarn com.google.android.play.core.**
+
 # Hive / Dart VM snapshot unaffected; keep JDBC-free generic rules minimal.
