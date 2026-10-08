@@ -1,0 +1,4 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Profile builds connect to Flutter tooling over the network. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

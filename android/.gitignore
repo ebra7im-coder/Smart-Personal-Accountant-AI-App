@@ -1,0 +1,12 @@
+# Android build & IDE noise
+.gradle/
+local.properties
+key.properties
+**/*.keystore
+**/*.jks
+build/
+captures/
+.externalNativeBuild
+.cxx/
+
+# gradle-wrapper.jar IS committed intentionally (CI needs ./gradlew).
