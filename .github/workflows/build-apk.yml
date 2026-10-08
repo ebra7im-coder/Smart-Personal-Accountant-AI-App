@@ -7,6 +7,11 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+# Required so the job can create GitHub Releases with GITHUB_TOKEN
+# (new repositories default to read-only token permissions).
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,8 +34,11 @@ jobs:
 
       - run: flutter pub get
 
-      # Static analysis gate (non-blocking for now — flip to blocking by
-      # removing the `continue-on-error` once the codebase is frozen).
+      - name: Run tests
+        run: flutter test
+
+      # Static analysis gate (informational — keeps the pipeline green
+      # while the codebase is still evolving).
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
 
@@ -46,10 +54,11 @@ jobs:
 
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: Release v1.0.${{ github.run_number }}
           files: build/app/outputs/flutter-apk/app-release.apk
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
