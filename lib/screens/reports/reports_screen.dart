@@ -71,8 +71,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
       }
       final double income = Helpers.sumBy(txs, TxType.income);
       final double expense = Helpers.sumBy(txs, TxType.expense);
-      final String stamp =
-          DateTime.now().millisecondsSinceEpoch.toString();
+      final String stamp = DateTime.now().millisecondsSinceEpoch.toString();
 
       if (asPdf) {
         final Uint8List bytes = await ExportService.generatePdf(
@@ -133,8 +132,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
               labelColor: AppColors.white,
               unselectedLabelColor: AppColors.textGrey,
               dividerColor: Colors.transparent,
-              labelStyle: const TextStyle(
-                  fontSize: 12.5, fontWeight: FontWeight.w700),
+              labelStyle:
+                  const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
               tabs: const <Widget>[
                 Tab(text: 'يومي', height: 38),
                 Tab(text: 'أسبوعي', height: 38),
@@ -190,8 +189,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: AppColors.white,
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusL),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusL),
                           border: Border.all(color: AppColors.line),
                         ),
                         child: Column(
@@ -223,8 +221,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                             children: <Widget>[
                               Text('التصدير متاح لمشتركي ',
                                   style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textGrey)),
+                                      fontSize: 12, color: AppColors.textGrey)),
                               ProBadge(small: true),
                             ],
                           ),
@@ -259,11 +256,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
                                     : () => _export(asPdf: false),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF1E7145),
-                                  disabledBackgroundColor: const Color(0xFF1E7145)
-                                      .withOpacity(0.5),
+                                  disabledBackgroundColor:
+                                      const Color(0xFF1E7145).withOpacity(0.5),
                                 ),
-                                icon: const Icon(Icons.grid_on_rounded,
-                                    size: 20),
+                                icon:
+                                    const Icon(Icons.grid_on_rounded, size: 20),
                                 label: const Text('Excel'),
                               ),
                             ),
@@ -302,8 +299,7 @@ class _TotalCard extends StatelessWidget {
         ),
         child: Column(
           children: <Widget>[
-            Text(label,
-                style: TextStyle(fontSize: 11, color: color)),
+            Text(label, style: TextStyle(fontSize: 11, color: color)),
             const SizedBox(height: 4),
             FittedBox(
               child: Text(

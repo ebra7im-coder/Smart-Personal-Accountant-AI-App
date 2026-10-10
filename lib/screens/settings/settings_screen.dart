@@ -47,8 +47,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final bool canBio = await SecurityService.canUseBiometrics();
     if (!mounted) return;
     setState(() {
-      _biometricEnabled =
-          prefs.getBool(PrefKeys.biometricEnabled) ?? false;
+      _biometricEnabled = prefs.getBool(PrefKeys.biometricEnabled) ?? false;
       _biometricAvailable = canBio;
     });
     try {
@@ -59,8 +58,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _toggleBiometric(bool value) async {
     if (value) {
-      final bool ok =
-          await SecurityService.authenticate('فعّل القفل بالبصمة');
+      final bool ok = await SecurityService.authenticate('فعّل القفل بالبصمة');
       if (!ok) return;
     }
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -127,8 +125,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('خروج',
-                style: TextStyle(color: AppColors.danger)),
+            child:
+                const Text('خروج', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -231,8 +229,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             SwitchListTile(
               value: _biometricEnabled,
               onChanged: _biometricAvailable ? _toggleBiometric : null,
-              secondary: const Icon(Icons.fingerprint_rounded,
-                  color: AppColors.navy),
+              secondary:
+                  const Icon(Icons.fingerprint_rounded, color: AppColors.navy),
               title: const Text('قفل التطبيق بالبصمة',
                   style: TextStyle(fontSize: 14)),
               subtitle: Text(
@@ -367,8 +365,7 @@ class _Tile extends StatelessWidget {
       subtitle: Text(subtitle,
           style: const TextStyle(fontSize: 11.5, color: AppColors.textGrey)),
       trailing: showArrow
-          ? (trailing ??
-              const Icon(Icons.chevron_left_rounded, size: 22))
+          ? (trailing ?? const Icon(Icons.chevron_left_rounded, size: 22))
           : trailing,
     );
   }

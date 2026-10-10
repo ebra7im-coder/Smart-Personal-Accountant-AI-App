@@ -67,9 +67,8 @@ class BillingService {
   Future<bool> purchase(String productId) async {
     try {
       if (!_available) return false;
-      final ProductDetails? details = _products
-          .where((ProductDetails p) => p.id == productId)
-          .firstOrNull;
+      final ProductDetails? details =
+          _products.where((ProductDetails p) => p.id == productId).firstOrNull;
       if (details == null) return false;
       final PurchaseParam param = PurchaseParam(productDetails: details);
       return await _iap.buyNonConsumable(purchaseParam: param);
@@ -120,7 +119,8 @@ class BillingService {
 }
 
 /// Riverpod provider — a single app-wide BillingService instance.
-final Provider<BillingService> billingProvider = Provider<BillingService>((Ref ref) {
+final Provider<BillingService> billingProvider =
+    Provider<BillingService>((Ref ref) {
   final BillingService service = BillingService();
   ref.onDispose(service.dispose);
   return service;

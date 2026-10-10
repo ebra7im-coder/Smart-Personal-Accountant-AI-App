@@ -32,8 +32,7 @@ void main() {
   });
 
   group('AiService.parseVoiceCommand', () {
-    test('sends the correct CodeCraft request and parses the reply',
-        () async {
+    test('sends the correct CodeCraft request and parses the reply', () async {
       late String capturedAuth;
       late Map<String, dynamic> capturedBody;
 
@@ -79,29 +78,69 @@ void main() {
       ai.dispose();
     });
 
-    test('throws AiException on API error', () async {
+    test('falls back to the local parser on API error', () async {
       final AiService ai = AiService(
         apiKey: 'test-key',
         client: MockClient((http.Request request) async =>
             http.Response('{"error":"boom"}', 400)),
       );
-      await expectLater(
-        ai.parseVoiceCommand('صرفت 50'),
-        throwsA(isA<AiException>()),
-      );
+      // Robustness contract: a dead API must never dead-end voice entry.
+      final AiParsedTransaction? r = await ai.parseVoiceCommand('صرفت 50');
+      expect(r, isNotNull);
+      expect(r!.type, 'expense');
+      expect(r.amount, 50);
       ai.dispose();
     });
 
-    test('throws AiNotConfiguredException without a key', () async {
+    test('falls back to the local parser without a key', () async {
       final AiService ai = AiService(
         client: MockClient(
             (http.Request request) async => http.Response('{}', 200)),
       );
-      await expectLater(
-        ai.parseVoiceCommand('صرفت 50'),
-        throwsA(isA<AiNotConfiguredException>()),
-      );
+      final AiParsedTransaction? r = await ai.parseVoiceCommand('صرفت 50');
+      expect(r, isNotNull);
+      expect(r!.amount, 50);
       ai.dispose();
+    });
+  });
+
+  group('LocalTransactionParser (offline fallback)', () {
+    test('parses Egyptian expense phrase with Eastern digits', () {
+      final AiParsedTransaction? r =
+          LocalTransactionParser.parse('صرفت ٥٠ ريال مطعم');
+      expect(r, isNotNull);
+      expect(r!.type, 'expense');
+      expect(r.amount, 50);
+      expect(r.category, 'food');
+    });
+
+    test('parses income phrase', () {
+      final AiParsedTransaction? r =
+          LocalTransactionParser.parse('استلمت راتبي ٥٠٠٠ جنيه');
+      expect(r, isNotNull);
+      expect(r!.type, 'income');
+      expect(r.amount, 5000);
+      expect(r.category, 'salary');
+    });
+
+    test('parses decimal amounts and bills keyword', () {
+      final AiParsedTransaction? r =
+          LocalTransactionParser.parse('دفعت 125.5 فاتورة الكهربا');
+      expect(r, isNotNull);
+      expect(r!.type, 'expense');
+      expect(r.amount, 125.5);
+      expect(r.category, 'bills');
+    });
+
+    test('returns null when no amount present', () {
+      expect(LocalTransactionParser.parse('مرحبا'), isNull);
+    });
+
+    test('parses transport phrase', () {
+      final AiParsedTransaction? r =
+          LocalTransactionParser.parse('صرفت ٣٠ جنيه اوبر');
+      expect(r!.category, 'transport');
+      expect(r.amount, 30);
     });
   });
 

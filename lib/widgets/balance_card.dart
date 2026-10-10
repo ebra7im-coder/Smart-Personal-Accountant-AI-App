@@ -12,87 +12,99 @@ class BalanceCard extends StatelessWidget {
     required this.income,
     required this.expense,
     this.currency = 'ج.م',
+    this.onTap,
   });
 
   final double balance;
   final double income;
   final double expense;
   final String currency;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: <Color>[AppColors.navy, Color(0xFF164080)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: AppColors.navy.withOpacity(0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: <Color>[AppColors.navy, Color(0xFF164080)],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(Icons.account_balance_wallet_rounded,
-                  color: AppColors.green, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'الرصيد الإجمالي',
-                style: TextStyle(
-                  color: AppColors.white.withOpacity(0.75),
-                  fontSize: 13,
-                ),
-              ),
-              const Spacer(),
-              // AI spark = the smart assistant is watching over this wallet.
-              const Icon(Icons.auto_awesome, color: AppColors.green, size: 16),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            Helpers.money(balance, currency: currency),
-            style: const TextStyle(
-              fontFamily: 'Tajawal',
-              fontSize: 34,
-              fontWeight: FontWeight.w800,
-              color: AppColors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: AppColors.navy.withOpacity(0.35),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _Chip(
-                  icon: Icons.arrow_downward_rounded,
-                  label: 'الدخل',
-                  value: income,
-                  color: AppColors.green,
-                  currency: currency,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const Icon(Icons.account_balance_wallet_rounded,
+                    color: AppColors.green, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'الرصيد الإجمالي',
+                  style: TextStyle(
+                    color: AppColors.white.withOpacity(0.75),
+                    fontSize: 13,
+                  ),
+                ),
+                const Spacer(),
+                // AI spark = the smart assistant is watching over this wallet.
+                const Icon(Icons.auto_awesome,
+                    color: AppColors.green, size: 16),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // FittedBox: very large balances never overflow small phones.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: Text(
+                Helpers.money(balance, currency: currency),
+                maxLines: 1,
+                style: const TextStyle(
+                  fontFamily: 'Tajawal',
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.white,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _Chip(
-                  icon: Icons.arrow_upward_rounded,
-                  label: 'المصروف',
-                  value: expense,
-                  color: const Color(0xFFFF6B6B),
-                  currency: currency,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _Chip(
+                    icon: Icons.arrow_downward_rounded,
+                    label: 'الدخل',
+                    value: income,
+                    color: AppColors.green,
+                    currency: currency,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _Chip(
+                    icon: Icons.arrow_upward_rounded,
+                    label: 'المصروف',
+                    value: expense,
+                    color: const Color(0xFFFF6B6B),
+                    currency: currency,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

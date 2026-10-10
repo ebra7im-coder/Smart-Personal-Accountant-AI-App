@@ -11,7 +11,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../models/transaction.dart';
@@ -19,19 +18,22 @@ import '../../providers/budget_provider.dart';
 import '../../providers/plan_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../services/ai_service.dart';
-import '../../services/ads_service.dart';
 import '../../services/hive_service.dart';
-import '../../services/ocr_service.dart';
 import '../../utils/constants.dart';
 import '../../utils/helpers.dart';
 import '../../utils/validators.dart';
 import '../../widgets/category_chip.dart';
 import '../../widgets/pro_badge.dart';
+import '../ocr/ocr_flow.dart';
 import '../paywall/paywall_screen.dart';
-import '../ocr/ocr_confirm_screen.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
-  const AddTransactionSheet({super.key, this.existing, this.prefill});
+  const AddTransactionSheet({
+    super.key,
+    this.existing,
+    this.prefill,
+    this.initialType,
+  });
 
   /// When set, the sheet edits this transaction instead of creating one.
   final Transaction? existing;
@@ -39,22 +41,32 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
   /// AI-prefilled values (voice / OCR / chat flow).
   final AiParsedTransaction? prefill;
 
+  /// Pre-selected type for new transactions (dashboard quick actions).
+  final TxType? initialType;
+
+  /// Free-plan monthly quota gate. Returns false when blocked (paywall shown).
+  static bool quotaBlocked(WidgetRef ref) {
+    final bool isPro = ref.read(isProProvider);
+    if (isPro) return false;
+    final String mk = Helpers.monthKey(DateTime.now());
+    final int used = HiveService.countTransactionsForMonth(mk);
+    if (used >= PlanLimits.freeTransactionsPerMonth) {
+      Fluttertoast.showToast(
+        msg: 'وصلت الحد المجاني (٧٠ معاملة/شهر) — قم بالترقية للمتابعة',
+        toastLength: Toast.LENGTH_LONG,
+      );
+      return true;
+    }
+    return false;
+  }
+
   /// Entry point from HomeShell: free-plan quota is checked here.
   static Future<void> maybeShow(BuildContext context, WidgetRef ref) async {
-    final bool isPro = ref.read(isProProvider);
-    if (!isPro) {
-      final String mk = Helpers.monthKey(DateTime.now());
-      final int used = HiveService.countTransactionsForMonth(mk);
-      if (used >= PlanLimits.freeTransactionsPerMonth) {
-        Fluttertoast.showToast(
-          msg: 'وصلت الحد المجاني (٧٠ معاملة/شهر) — قم بالترقية للمتابعة',
-          toastLength: Toast.LENGTH_LONG,
-        );
-        if (context.mounted) {
-          Navigator.of(context).pushNamed(PaywallScreen.routeName);
-        }
-        return;
+    if (quotaBlocked(ref)) {
+      if (context.mounted) {
+        Navigator.of(context).pushNamed(PaywallScreen.routeName);
       }
+      return;
     }
     if (context.mounted) {
       await showModalBottomSheet<void>(
@@ -62,6 +74,28 @@ class AddTransactionSheet extends ConsumerStatefulWidget {
         isScrollControlled: true,
         useSafeArea: true,
         builder: (_) => const AddTransactionSheet(),
+      );
+    }
+  }
+
+  /// Same as [maybeShow] but with a pre-selected income/expense toggle.
+  static Future<void> maybeShowWithType(
+    BuildContext context,
+    WidgetRef ref,
+    TxType type,
+  ) async {
+    if (quotaBlocked(ref)) {
+      if (context.mounted) {
+        Navigator.of(context).pushNamed(PaywallScreen.routeName);
+      }
+      return;
+    }
+    if (context.mounted) {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        builder: (_) => AddTransactionSheet(initialType: type),
       );
     }
   }
@@ -95,6 +129,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   DateTime _date = DateTime.now();
   bool _busy = false;
 
+  /// True once the user manually picks a category — disables AI
+  /// auto-categorization so we never override a deliberate choice.
+  bool _categoryTouched = false;
+
   // Voice state
   bool _speechAvailable = false;
   bool _listening = false;
@@ -119,6 +157,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       _amountCtrl.text =
           prefill.amount > 0 ? prefill.amount.toStringAsFixed(2) : '';
       _noteCtrl.text = prefill.note;
+      _categoryTouched = prefill.amount > 0; // AI already chose a category
+    } else if (widget.initialType != null) {
+      _type = widget.initialType!;
     }
     _initSpeech();
   }
@@ -197,61 +238,30 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       setState(() {
         _type = parsed.type == 'income' ? TxType.income : TxType.expense;
         _category = parsed.category;
+        _categoryTouched = true;
         _date = parsed.date;
         _amountCtrl.text = parsed.amount.toStringAsFixed(2);
         _noteCtrl.text = parsed.note;
       });
-      Fluttertoast.showToast(msg: 'تم التحليل بالذكاء الاصطناعي ✨');
-    } on AiNotConfiguredException {
-      if (mounted) _showApiKeyHint();
+      Fluttertoast.showToast(msg: 'تم التحليل تلقائياً ✨');
     } catch (_) {
-      Fluttertoast.showToast(msg: 'تعذر تحليل الجملة، حاول مرة أخرى');
+      Fluttertoast.showToast(msg: 'تعذر تحليل الجملة، اكتبها يدوياً');
     } finally {
       if (mounted) setState(() => _aiParsing = false);
     }
   }
 
-  void _showApiKeyHint() {
-    Fluttertoast.showToast(
-      msg: 'خدمة الـ AI غير مهيأة — أضف CODECRAFT_API_KEY عبر --dart-define',
-      toastLength: Toast.LENGTH_LONG,
-    );
-  }
-
   // ----------------------------- OCR -----------------------------
 
-  Future<void> _openScanner() async {
-    if (!ref.read(isProProvider)) {
-      Fluttertoast.showToast(msg: 'مسح الفواتير ميزة PRO 👑');
-      Navigator.of(context).pushNamed(PaywallScreen.routeName);
-      return;
-    }
-    try {
-      final XFile? photo =
-          await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 80);
-      if (photo == null || !mounted) return;
-      await AdsService.maybeShowInterstitial(every: 2);
-
-      final OcrResult result = await OcrService.scanReceipt(
-        photo.path,
-        ai: AiService.instance,
-      );
-      if (!mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => OcrConfirmScreen(result: result),
-        ),
-      );
-    } catch (_) {
-      Fluttertoast.showToast(msg: 'تعذر فتح الكاميرا');
-    }
-  }
+  Future<void> _openScanner() => OcrFlow.start(context, ref);
 
   // ----------------------------- Save -----------------------------
 
   Future<void> _autoCategorize() async {
-    // AI auto-categorization when the user typed a note but kept default cat.
-    if (_noteCtrl.text.trim().isEmpty || _category != 'other') return;
+    // AI auto-categorization when the user typed a note and did NOT pick a
+    // category manually (bug fix: previously never ran because the default
+    // category was 'food', not 'other').
+    if (_categoryTouched || _noteCtrl.text.trim().isEmpty) return;
     try {
       final String cat = await AiService.instance.categorizeTransaction(
         note: _noteCtrl.text.trim(),
@@ -276,8 +286,8 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       amount: amount,
       date: _date,
       note: _noteCtrl.text.trim(),
-      createdAtMs: widget.existing?.createdAtMs ??
-          DateTime.now().millisecondsSinceEpoch,
+      createdAtMs:
+          widget.existing?.createdAtMs ?? DateTime.now().millisecondsSinceEpoch,
       source: widget.existing?.source ??
           (_transcript.isNotEmpty ? 'voice' : 'manual'),
       synced: widget.existing?.synced ?? false,
@@ -383,8 +393,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           boxShadow: _listening
                               ? <BoxShadow>[
                                   BoxShadow(
-                                    color:
-                                        AppColors.green.withOpacity(0.5),
+                                    color: AppColors.green.withOpacity(0.5),
                                     blurRadius: 14,
                                     spreadRadius: 2,
                                   ),
@@ -423,9 +432,8 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                           color: _transcript.isNotEmpty
                               ? AppColors.textDark
                               : AppColors.textGrey,
-                          fontWeight: _listening
-                              ? FontWeight.w600
-                              : FontWeight.w400,
+                          fontWeight:
+                              _listening ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                     ),
@@ -505,7 +513,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                     .map((String key) => CategoryChip(
                           categoryKey: key,
                           selected: _category == key,
-                          onTap: () => setState(() => _category = key),
+                          onTap: () => setState(() {
+                            _category = key;
+                            _categoryTouched = true;
+                          }),
                         ))
                     .toList(),
               ),
@@ -563,8 +574,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                   onPressed: _busy ? null : _save,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.green,
-                    disabledBackgroundColor:
-                        AppColors.green.withOpacity(0.5),
+                    disabledBackgroundColor: AppColors.green.withOpacity(0.5),
                   ),
                   icon: _busy
                       ? const SizedBox(

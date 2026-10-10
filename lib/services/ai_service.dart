@@ -23,6 +23,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
+import '../utils/helpers.dart';
 
 /// One message in a chat-completion request.
 class AiChatTurn {
@@ -32,7 +33,8 @@ class AiChatTurn {
   final String role;
   final String content;
 
-  Map<String, String> toMap() => <String, String>{'role': role, 'content': content};
+  Map<String, String> toMap() =>
+      <String, String>{'role': role, 'content': content};
 }
 
 /// Structured transaction extracted by the AI from voice / text / receipts.
@@ -61,7 +63,8 @@ class AiParsedTransaction {
 }
 
 class AiService {
-  AiService({http.Client? client, String? baseUrl, String? model, String? apiKey})
+  AiService(
+      {http.Client? client, String? baseUrl, String? model, String? apiKey})
       : _client = client ?? http.Client(),
         _baseUrl = baseUrl ?? _defaultBaseUrl,
         _model = model ?? _defaultModel {
@@ -184,16 +187,16 @@ class AiService {
           return data;
         }
         if (res.statusCode >= 500 || res.statusCode == 429) {
-          lastError = AiException(
-              'CodeCraft API ${res.statusCode}: ${res.body}');
+          lastError =
+              AiException('CodeCraft API ${res.statusCode}: ${res.body}');
           await Future<void>.delayed(
               Duration(milliseconds: 700 * (attempt + 1)));
           continue;
         }
-        throw AiException(
-            'CodeCraft API ${res.statusCode}: ${res.body}');
+        throw AiException('CodeCraft API ${res.statusCode}: ${res.body}');
       } on TimeoutException {
-        lastError = const AiException('انتهت مهلة الاتصال بخدمة الذكاء الاصطناعي');
+        lastError =
+            const AiException('انتهت مهلة الاتصال بخدمة الذكاء الاصطناعي');
       } on AiException {
         rethrow;
       } catch (e) {
@@ -217,9 +220,8 @@ class AiService {
     final List<dynamic> choices =
         (data['choices'] as List<dynamic>? ?? <dynamic>[]);
     if (choices.isEmpty) throw const AiException('رد فارغ من النموذج');
-    final Map<String, dynamic> message =
-        (choices.first as Map<String, dynamic>)['message']
-            as Map<String, dynamic>;
+    final Map<String, dynamic> message = (choices.first
+        as Map<String, dynamic>)['message'] as Map<String, dynamic>;
     return (message['content'] ?? '').toString().trim();
   }
 
@@ -267,16 +269,26 @@ class AiService {
 الجملة: "${transcript.trim()}"
 JSON:''';
 
-    final String reply = await completeText(
-      <AiChatTurn>[AiChatTurn(role: 'user', content: prompt)],
-      temperature: 0.0,
-      maxTokens: 300,
-    );
     try {
-      return _parseTransactionJson(_extractJson(reply));
+      final String reply = await completeText(
+        <AiChatTurn>[AiChatTurn(role: 'user', content: prompt)],
+        temperature: 0.0,
+        maxTokens: 300,
+      );
+      try {
+        final AiParsedTransaction parsed =
+            _parseTransactionJson(_extractJson(reply));
+        if (parsed.amount > 0) return parsed;
+      } catch (_) {
+        // fall through to the local parser
+      }
+    } on AiNotConfiguredException {
+      // No API key — the local parser keeps the feature usable.
     } catch (_) {
-      return null;
+      // Network/API failure — same.
     }
+    // Robustness: offline / AI-failure fallback so voice entry NEVER dead-ends.
+    return LocalTransactionParser.parse(transcript);
   }
 
   // ---------------------------------------------------------------------------
@@ -303,10 +315,19 @@ JSON:''';
     );
     try {
       final Map<String, dynamic> json = _extractJson(reply);
-      final String cat = (json['category'] ?? '').toString().trim().toLowerCase();
+      final String cat =
+          (json['category'] ?? '').toString().trim().toLowerCase();
       const List<String> allowed = <String>[
-        'food', 'transport', 'bills', 'shopping', 'entertainment',
-        'health', 'education', 'salary', 'savings', 'other',
+        'food',
+        'transport',
+        'bills',
+        'shopping',
+        'entertainment',
+        'health',
+        'education',
+        'salary',
+        'savings',
+        'other',
       ];
       return allowed.contains(cat) ? cat : 'other';
     } catch (_) {
@@ -346,11 +367,10 @@ JSON:''';
   }
 
   AiParsedTransaction _parseTransactionJson(Map<String, dynamic> json) {
-    final double amount =
-        (json['amount'] as num? ?? 0).toDouble().abs();
+    final double amount = (json['amount'] as num? ?? 0).toDouble().abs();
     final String type = (json['type'] ?? 'expense').toString();
-    final DateTime date = DateTime.tryParse((json['date'] ?? '').toString()) ??
-        DateTime.now();
+    final DateTime date =
+        DateTime.tryParse((json['date'] ?? '').toString()) ?? DateTime.now();
     return AiParsedTransaction(
       type: type == 'income' ? 'income' : 'expense',
       amount: amount,
@@ -387,7 +407,7 @@ JSON:''';
       ...history,
       AiChatTurn(role: 'user', content: userMessage),
     ];
-    return completeText(messages, temperature: 0.5, maxTokens: 900);
+    return completeText(messages, temperature: 0.5, maxTokens: 1500);
   }
 
   /// Builds a compact Arabic summary of the user's finances for the system
@@ -406,12 +426,13 @@ JSON:''';
         'الصافي: ${(monthIncome - monthExpense).toStringAsFixed(0)} $currency');
     if (expensesByCategory.isNotEmpty) {
       sb.writeln('المصروف حسب التصنيف:');
-      final List<MapEntry<String, double>> sorted =
-          expensesByCategory.entries.toList()
-            ..sort((MapEntry<String, double> a, MapEntry<String, double> b) =>
-                b.value.compareTo(a.value));
+      final List<MapEntry<String, double>> sorted = expensesByCategory.entries
+          .toList()
+        ..sort((MapEntry<String, double> a, MapEntry<String, double> b) =>
+            b.value.compareTo(a.value));
       for (final MapEntry<String, double> e in sorted) {
-        sb.writeln('- ${e.key}: ${e.value.toStringAsFixed(0)} $currency');
+        sb.writeln(
+            '- ${e.key.arLabel}: ${e.value.toStringAsFixed(0)} $currency');
       }
     }
     if (topExpenses.isNotEmpty) {
@@ -462,4 +483,132 @@ class AiException implements Exception {
   final String message;
   @override
   String toString() => message;
+}
+
+/// ---------------------------------------------------------------------------
+/// LocalTransactionParser — offline fallback for voice commands.
+///
+/// Parses Arabic (Egyptian/Gulf dialect) money phrases WITHOUT any network
+/// call: "صرفت ٥٠ ريال مطعم" -> expense/50/food. Used when the CodeCraft AI
+/// is unreachable or unconfigured, so voice entry works on every device.
+/// ---------------------------------------------------------------------------
+abstract final class LocalTransactionParser {
+  static final RegExp _number = RegExp(r'(\d+(?:[.,]\d+)?)');
+
+  /// Eastern-Arabic + Persian digits -> ASCII; drop thousands separators.
+  static String normalizeDigits(String input) {
+    final StringBuffer sb = StringBuffer();
+    for (final int code in input.runes) {
+      if (code >= 0x0660 && code <= 0x0669) {
+        sb.writeCharCode(0x30 + (code - 0x0660)); // ٠-٩ -> 0-9
+      } else if (code >= 0x06F0 && code <= 0x06F9) {
+        sb.writeCharCode(0x30 + (code - 0x06F0)); // ۰-۹ -> 0-9
+      } else if (code == 0x066B) {
+        sb.write('.'); // Arabic decimal separator
+      } else if (code == 0x066C) {
+        // Arabic thousands separator — drop
+      } else {
+        sb.writeCharCode(code);
+      }
+    }
+    return sb.toString();
+  }
+
+  static const List<String> _incomeWords = <String>[
+    'استلمت',
+    'وصلني',
+    'وصلت',
+    'قبضت',
+    'راتب',
+    'مرتب',
+    'معاش',
+    'دخل',
+    'كسبت',
+    'باعت',
+    'بيع',
+    'هدية',
+    'حصلت',
+    'مكافأة',
+    'بونص',
+    'عمولة',
+  ];
+  static const List<String> _expenseWords = <String>[
+    'صرفت',
+    'دفعت',
+    'اشتريت',
+    'شريت',
+    'فاتورة',
+    'فواتير',
+    'حساب',
+    'تكلف',
+  ];
+  static const Set<String> _currencyTokens = <String>{
+    'جنيه',
+    'جنيهات',
+    'ريال',
+    'ريالات',
+    'درهم',
+    'دراهم',
+    'دينار',
+    'دنانير',
+    'ج',
+    'م',
+    'ج.م',
+    'ر.س',
+    'egp',
+    'sar',
+    'le',
+    'aed',
+    'kwd',
+    'qar',
+  };
+
+  /// Returns null only when no amount exists in the phrase.
+  static AiParsedTransaction? parse(String input) {
+    final String text = normalizeDigits(input.trim());
+    if (text.isEmpty) return null;
+
+    final RegExpMatch? m = _number.firstMatch(text);
+    if (m == null) return null;
+    final double? amount = double.tryParse(m.group(1)!.replaceAll(',', '.'));
+    if (amount == null || amount <= 0) return null;
+
+    // ---- type (expense is the sensible default for spoken money phrases)
+    final bool hasIncome = _incomeWords.any((String w) => text.contains(w));
+    final bool hasExpense = _expenseWords.any((String w) => text.contains(w));
+    final String type = hasIncome && !hasExpense ? 'income' : 'expense';
+
+    // ---- category via the shared Arabic keyword catalog
+    String category = 'other';
+    for (final String key in CategoryX.expenseKeys) {
+      for (final String kw in key.keywords) {
+        if (text.contains(kw)) {
+          category = key;
+          break;
+        }
+      }
+      if (category != 'other') break;
+    }
+
+    // ---- note: strip numbers/currency/type words, keep the rest
+    final List<String> noteTokens = text
+        .split(RegExp(r'\s+'))
+        .where((String t) =>
+            t.isNotEmpty &&
+            !_number.hasMatch(t) &&
+            !_currencyTokens.contains(t.toLowerCase()) &&
+            !_incomeWords.contains(t) &&
+            !_expenseWords.contains(t))
+        .toList();
+    String note = noteTokens.join(' ').trim();
+    if (note.isEmpty) note = category.arLabel;
+
+    return AiParsedTransaction(
+      type: type,
+      amount: amount,
+      category: category,
+      date: DateTime.now(),
+      note: note,
+    );
+  }
 }

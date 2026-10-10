@@ -22,22 +22,29 @@ class ChatMessage extends HiveObject {
   @HiveField(4)
   bool pending;
 
+  /// Marks a failed assistant bubble (tap to retry).
+  @HiveField(5)
+  bool isError;
+
   ChatMessage({
     required this.id,
     required this.text,
     required this.role,
     required this.createdAt,
     this.pending = false,
+    this.isError = false,
   });
 
   bool get isUser => role == 'user';
 
-  ChatMessage copyWith({String? text, bool? pending}) => ChatMessage(
+  ChatMessage copyWith({String? text, bool? pending, bool? isError}) =>
+      ChatMessage(
         id: id,
         text: text ?? this.text,
         role: role,
         createdAt: createdAt,
         pending: pending ?? this.pending,
+        isError: isError ?? this.isError,
       );
 
   Map<String, dynamic> toMap() => <String, dynamic>{
@@ -51,8 +58,7 @@ class ChatMessage extends HiveObject {
         id: (map['id'] ?? '') as String,
         text: (map['text'] ?? '') as String,
         role: (map['role'] ?? 'assistant') as String,
-        createdAt:
-            DateTime.tryParse((map['createdAt'] ?? '') as String) ??
-                DateTime.now(),
+        createdAt: DateTime.tryParse((map['createdAt'] ?? '') as String) ??
+            DateTime.now(),
       );
 }

@@ -49,8 +49,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      final UserCredential cred = await FirebaseAuthService
-          .signInWithEmail(_emailCtrl.text.trim(), _passCtrl.text);
+      final UserCredential cred = await FirebaseAuthService.signInWithEmail(
+          _emailCtrl.text.trim(), _passCtrl.text);
       await _setUserAndGoHome(_profileFromCred(cred));
     } on FirebaseAuthException catch (e) {
       Fluttertoast.showToast(msg: authErrorAr(e.code));
@@ -63,7 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   User _profileFromCred(UserCredential cred) => User(
         uid: cred.user?.uid ?? 'local',
-        name: cred.user?.displayName ?? (cred.user?.email ?? 'مستخدم').split('@').first,
+        name: cred.user?.displayName ??
+            (cred.user?.email ?? 'مستخدم').split('@').first,
         email: cred.user?.email ?? '',
         isGuest: false,
       );
@@ -71,8 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _google() async {
     setState(() => _busy = true);
     try {
-      final UserCredential cred =
-          await FirebaseAuthService.signInWithGoogle();
+      final UserCredential cred = await FirebaseAuthService.signInWithGoogle();
       await _setUserAndGoHome(_profileFromCred(cred));
     } on FirebaseAuthException catch (e) {
       Fluttertoast.showToast(msg: authErrorAr(e.code));
@@ -86,8 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _guest() async {
     setState(() => _busy = true);
     try {
-      final UserCredential cred =
-          await FirebaseAuthService.signInAsGuest();
+      final UserCredential cred = await FirebaseAuthService.signInAsGuest();
       await _setUserAndGoHome(User(
         uid: cred.user?.uid ?? 'guest',
         name: 'زائر',
@@ -163,8 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
                         ),
-                        onPressed: () =>
-                            setState(() => _obscure = !_obscure),
+                        onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                     ),
                   ),
@@ -242,7 +240,8 @@ class _OrDivider extends StatelessWidget {
 }
 
 class _SocialButton extends StatelessWidget {
-  const _SocialButton({required this.icon, required this.label, this.onPressed});
+  const _SocialButton(
+      {required this.icon, required this.label, this.onPressed});
 
   final IconData icon;
   final String label;

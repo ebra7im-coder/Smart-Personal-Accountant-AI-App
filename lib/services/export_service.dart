@@ -79,7 +79,8 @@ abstract final class ExportService {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: <pw.Widget>[
               _summaryBox('إجمالي الدخل', totalIncome, '#00C896', arabicBold),
-              _summaryBox('إجمالي المصروف', totalExpense, '#E5484D', arabicBold),
+              _summaryBox(
+                  'إجمالي المصروف', totalExpense, '#E5484D', arabicBold),
               _summaryBox(
                   'الصافي', totalIncome - totalExpense, '#0F2A54', arabicBold),
             ],
@@ -100,13 +101,15 @@ abstract final class ExportService {
             cellAlignment: pw.Alignment.centerRight,
             oddRowDecoration:
                 pw.BoxDecoration(color: PdfColor.fromHex('#F5F7FB')),
-            data: transactions.map((Transaction t) => <String>[
-              Helpers.dateShort(t.date),
-              t.type == TxType.income ? 'دخل' : 'مصروف',
-              t.category.arLabel,
-              t.note.isEmpty ? '—' : t.note,
-              Helpers.money(t.amount),
-            ]).toList(),
+            data: transactions
+                .map((Transaction t) => <String>[
+                      Helpers.dateShort(t.date),
+                      t.type == TxType.income ? 'دخل' : 'مصروف',
+                      t.category.arLabel,
+                      t.note.isEmpty ? '—' : t.note,
+                      Helpers.money(t.amount),
+                    ])
+                .toList(),
           ),
         ],
       ),
@@ -133,8 +136,8 @@ abstract final class ExportService {
           pw.SizedBox(height: 4),
           pw.Text(
             value.toStringAsFixed(0),
-            style: pw.TextStyle(
-                font: bold, fontSize: 16, color: PdfColors.white),
+            style:
+                pw.TextStyle(font: bold, fontSize: 16, color: PdfColors.white),
           ),
         ],
       ),
@@ -144,8 +147,7 @@ abstract final class ExportService {
   // ------------------------------------------------------------------ Excel
 
   /// Builds an .xlsx workbook with one sheet of transactions.
-  static Future<Uint8List> generateExcel(
-      List<Transaction> transactions) async {
+  static Future<Uint8List> generateExcel(List<Transaction> transactions) async {
     final Excel excel = Excel.createExcel();
     final Sheet sheet = excel['التقرير'];
 

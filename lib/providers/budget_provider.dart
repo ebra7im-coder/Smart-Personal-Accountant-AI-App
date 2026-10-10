@@ -44,7 +44,8 @@ class BudgetActions {
     try {
       final String? uid = FirebaseAuthService.currentUid;
       if (uid != null) {
-        await FirebaseFirestoreService.deleteBudget(uid, '${monthKey}_$category');
+        await FirebaseFirestoreService.deleteBudget(
+            uid, '${monthKey}_$category');
       }
     } catch (_) {}
     _ref.invalidate(budgetsProvider);

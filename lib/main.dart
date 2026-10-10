@@ -27,8 +27,7 @@ import 'utils/constants.dart';
 
 Future<void> main() async {
   // Ensure bindings before any plugin work; keep splash until ready.
-  final WidgetsBinding binding =
-      WidgetsFlutterBinding.ensureInitialized();
+  final WidgetsBinding binding = WidgetsFlutterBinding.ensureInitialized();
   binding.deferFirstFrame();
 
   // Portrait-only, edge-to-edge, Android-style overlays (RTL app).
@@ -96,7 +95,8 @@ Future<void> main() async {
       }
     } catch (_) {/* local-only mode */}
   }
-  final bool biometricEnabled = prefs.getBool(PrefKeys.biometricEnabled) ?? false;
+  final bool biometricEnabled =
+      prefs.getBool(PrefKeys.biometricEnabled) ?? false;
 
   binding.allowFirstFrame();
 

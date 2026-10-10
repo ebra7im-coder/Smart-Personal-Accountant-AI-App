@@ -16,8 +16,7 @@ class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
 
   @override
-  ConsumerState<TransactionsScreen> createState() =>
-      _TransactionsScreenState();
+  ConsumerState<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
 class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
@@ -83,8 +82,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   segments: const <ButtonSegment<String>>[
                     ButtonSegment<String>(value: 'all', label: Text('الكل')),
                     ButtonSegment<String>(value: 'income', label: Text('دخل')),
-                    ButtonSegment<String>(
-                        value: 'expense', label: Text('صرف')),
+                    ButtonSegment<String>(value: 'expense', label: Text('صرف')),
                   ],
                   selected: <String>{_filter},
                   showSelectedIcon: false,
@@ -111,8 +109,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
                     itemCount: grouped.length,
                     itemBuilder: (BuildContext ctx, int i) {
-                      final String day =
-                          grouped.keys.elementAt(i);
+                      final String day = grouped.keys.elementAt(i);
                       final List<Transaction> txs = grouped[day]!;
                       final DateTime d = txs.first.date;
                       return Column(
@@ -133,8 +130,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                                 const SizedBox(width: 8),
                                 const Expanded(child: Divider()),
                                 Text(
-                                  Helpers.money(Helpers.sumBy(
-                                      txs, TxType.expense)),
+                                  Helpers.money(
+                                      Helpers.sumBy(txs, TxType.expense)),
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: AppColors.textHint,

@@ -7,7 +7,8 @@ import 'package:smart_personal_accountant/utils/constants.dart';
 import 'package:smart_personal_accountant/widgets/transaction_card.dart';
 
 void main() {
-  testWidgets('TransactionCard renders expense row', (WidgetTester tester) async {
+  testWidgets('TransactionCard renders expense row',
+      (WidgetTester tester) async {
     final Transaction tx = Transaction(
       id: 't1',
       type: TxType.expense,

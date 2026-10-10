@@ -55,8 +55,7 @@ abstract final class NotificationService {
         ledOnMs: 300,
         ledOffMs: 500,
       );
-      const NotificationDetails details =
-          NotificationDetails(android: android);
+      const NotificationDetails details = NotificationDetails(android: android);
       await _plugin.show(id, title, body, details);
     } catch (_) {}
   }
@@ -64,8 +63,7 @@ abstract final class NotificationService {
   /// Bridges FCM foreground messages into local notifications.
   static Future<void> initFcmForegroundBridge() async {
     await FcmService.onMessageHandler((RemoteMessage message) async {
-      final String title =
-          message.notification?.title ?? 'المحاسب الذكي';
+      final String title = message.notification?.title ?? 'المحاسب الذكي';
       final String body =
           message.notification?.body ?? message.data['body'] ?? '';
       await show(
@@ -78,5 +76,6 @@ abstract final class NotificationService {
 
   /// Unique-but-stable notification id per category+threshold per month.
   static int budgetAlertId(String category, int percent) =>
-      ('budget_${DateTime.now().month}_$category$percent').hashCode & 0x7fffffff;
+      ('budget_${DateTime.now().month}_$category$percent').hashCode &
+      0x7fffffff;
 }

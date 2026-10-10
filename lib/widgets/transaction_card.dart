@@ -50,8 +50,7 @@ class TransactionCard extends StatelessWidget {
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppSizes.radiusM),
                 border: Border.all(color: AppColors.line),
@@ -103,8 +102,7 @@ class TransactionCard extends StatelessWidget {
                             if (showDate) ...<Widget>[
                               const Text(' • ',
                                   style: TextStyle(
-                                      color: AppColors.textHint,
-                                      fontSize: 12)),
+                                      color: AppColors.textHint, fontSize: 12)),
                               Text(
                                 Helpers.smartDate(transaction.date),
                                 style: const TextStyle(
@@ -116,8 +114,8 @@ class TransactionCard extends StatelessWidget {
                             if (transaction.source == 'voice')
                               const Padding(
                                 padding: EdgeInsets.only(right: 6),
-                                child: Icon(Icons.mic, size: 12,
-                                    color: AppColors.green),
+                                child: Icon(Icons.mic,
+                                    size: 12, color: AppColors.green),
                               ),
                             if (transaction.source == 'ocr')
                               const Padding(

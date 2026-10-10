@@ -119,8 +119,8 @@ class BudgetsScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (BuildContext ctx, void Function(void Function()) setSheet) {
             return Padding(
-              padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(ctx).viewInsets.bottom),
+              padding:
+                  EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -165,9 +165,8 @@ class BudgetsScreen extends ConsumerWidget {
                                 borderRadius:
                                     BorderRadius.circular(AppSizes.radiusM),
                                 border: Border.all(
-                                  color: selected
-                                      ? key.color
-                                      : Colors.transparent,
+                                  color:
+                                      selected ? key.color : Colors.transparent,
                                 ),
                               ),
                               child: Column(
@@ -200,8 +199,8 @@ class BudgetsScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     TextField(
                       controller: limitCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                           fontSize: 24,
@@ -213,8 +212,7 @@ class BudgetsScreen extends ConsumerWidget {
                         filled: true,
                         fillColor: AppColors.bg,
                         border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppSizes.radiusL),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusL),
                           borderSide: BorderSide.none,
                         ),
                       ),
@@ -224,11 +222,9 @@ class BudgetsScreen extends ConsumerWidget {
                       height: AppSizes.buttonH,
                       child: ElevatedButton(
                         onPressed: () async {
-                          final double? limit =
-                              double.tryParse(limitCtrl.text);
+                          final double? limit = double.tryParse(limitCtrl.text);
                           if (limit == null || limit <= 0) {
-                            Fluttertoast.showToast(
-                                msg: 'أدخل مبلغ الميزانية');
+                            Fluttertoast.showToast(msg: 'أدخل مبلغ الميزانية');
                             return;
                           }
                           final Budget budget = Budget(
@@ -236,15 +232,12 @@ class BudgetsScreen extends ConsumerWidget {
                             limit: limit,
                             monthKey: Helpers.monthKey(DateTime.now()),
                           );
-                          await ref
-                              .read(budgetActionsProvider)
-                              .save(budget);
+                          await ref.read(budgetActionsProvider).save(budget);
                           await ref
                               .read(budgetActionsProvider)
                               .checkThresholds();
                           if (ctx.mounted) Navigator.of(ctx).pop();
-                          Fluttertoast.showToast(
-                              msg: 'تم حفظ الميزانية ✅');
+                          Fluttertoast.showToast(msg: 'تم حفظ الميزانية ✅');
                         },
                         child: const Text('حفظ الميزانية'),
                       ),

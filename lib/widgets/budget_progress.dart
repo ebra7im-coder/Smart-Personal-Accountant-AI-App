@@ -53,8 +53,8 @@ class BudgetProgressCard extends StatelessWidget {
                   color: categoryKey.color.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(categoryKey.icon,
-                    size: 20, color: categoryKey.color),
+                child:
+                    Icon(categoryKey.icon, size: 20, color: categoryKey.color),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -91,7 +91,8 @@ class BudgetProgressCard extends StatelessWidget {
               tween: Tween<double>(begin: 0, end: progress.clamp(0.0, 1.0)),
               duration: const Duration(milliseconds: 600),
               curve: Curves.easeOutCubic,
-              builder: (BuildContext ctx, double v, _) => LinearProgressIndicator(
+              builder: (BuildContext ctx, double v, _) =>
+                  LinearProgressIndicator(
                 value: v,
                 minHeight: 10,
                 backgroundColor: AppColors.bg,
@@ -106,8 +107,7 @@ class BudgetProgressCard extends StatelessWidget {
             children: <Widget>[
               Text(
                 'صرفت ${Helpers.money(spent)} من ${Helpers.money(budget.limit)}',
-                style: const TextStyle(
-                    fontSize: 12, color: AppColors.textGrey),
+                style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
               ),
               Text(
                 '${(progress * 100).toStringAsFixed(0)}٪',

@@ -158,7 +158,9 @@ class _PhoneLoginSheetState extends State<PhoneLoginSheet> {
                 maxLength: 6,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontSize: 24, letterSpacing: 8, fontWeight: FontWeight.w700),
+                    fontSize: 24,
+                    letterSpacing: 8,
+                    fontWeight: FontWeight.w700),
                 decoration: const InputDecoration(
                   hintText: '------',
                   counterText: '',

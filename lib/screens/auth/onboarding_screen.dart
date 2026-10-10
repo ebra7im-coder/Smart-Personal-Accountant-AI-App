@@ -87,7 +87,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: <Color>[AppColors.navy, Color(0xFF164080)],
+                              colors: <Color>[
+                                AppColors.navy,
+                                Color(0xFF164080)
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(48),
                             boxShadow: <BoxShadow>[

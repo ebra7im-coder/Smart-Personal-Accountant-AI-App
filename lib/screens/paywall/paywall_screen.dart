@@ -35,7 +35,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _billing.init();
       if (mounted) {
-        setState(() => _storeReady = _billing.available && _billing.products.isNotEmpty);
+        setState(() =>
+            _storeReady = _billing.available && _billing.products.isNotEmpty);
       }
     });
   }
@@ -93,8 +94,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
           if (isPro)
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('تم',
-                  style: TextStyle(color: AppColors.green)),
+              child: const Text('تم', style: TextStyle(color: AppColors.green)),
             ),
         ],
       ),
@@ -146,7 +146,8 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
             // ---- Features ----
             _feature(Icons.mic_rounded, 'إدخال صوتي وتحليل فوري بلا حدود'),
-            _feature(Icons.document_scanner_outlined, 'مسح الفواتير بالكاميرا (OCR)'),
+            _feature(Icons.document_scanner_outlined,
+                'مسح الفواتير بالكاميرا (OCR)'),
             _feature(Icons.chat_rounded, 'محادثة غير محدودة مع المحاسب الآلي'),
             _feature(Icons.picture_as_pdf_rounded, 'تصدير تقارير PDF و Excel'),
             _feature(Icons.block_rounded, 'بدون إعلانات نهائياً'),
@@ -272,7 +273,8 @@ class _PlanCard extends StatelessWidget {
               : AppColors.white.withOpacity(0.04),
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           border: Border.all(
-            color: selected ? AppColors.green : AppColors.white.withOpacity(0.15),
+            color:
+                selected ? AppColors.green : AppColors.white.withOpacity(0.15),
             width: selected ? 1.8 : 1,
           ),
         ),

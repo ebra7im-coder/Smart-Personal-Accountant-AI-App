@@ -187,8 +187,7 @@ abstract final class FirebaseFirestoreService {
 
   // ---------------- Transactions ----------------
 
-  static Future<void> upsertTransaction(
-      String uid, Transaction tx) async {
+  static Future<void> upsertTransaction(String uid, Transaction tx) async {
     await _txCol(uid).doc(tx.id).set(tx.toMap(), SetOptions(merge: true));
   }
 
@@ -205,8 +204,9 @@ abstract final class FirebaseFirestoreService {
 
   // ---------------- Budgets ----------------
 
-  static Future<void> saveBudget(String uid, Budget budget) =>
-      _budgetCol(uid).doc(budget.key).set(budget.toMap(), SetOptions(merge: true));
+  static Future<void> saveBudget(String uid, Budget budget) => _budgetCol(uid)
+      .doc(budget.key)
+      .set(budget.toMap(), SetOptions(merge: true));
 
   static Future<void> deleteBudget(String uid, String key) =>
       _budgetCol(uid).doc(key).delete();
@@ -215,9 +215,9 @@ abstract final class FirebaseFirestoreService {
 
   static Future<void> saveFcmToken(String uid, String token) =>
       _db.collection('users').doc(uid).set(
-            <String, dynamic>{'fcmToken': token},
-            SetOptions(merge: true),
-          );
+        <String, dynamic>{'fcmToken': token},
+        SetOptions(merge: true),
+      );
 }
 
 abstract final class FcmService {

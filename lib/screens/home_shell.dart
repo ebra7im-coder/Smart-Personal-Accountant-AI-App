@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import '../models/transaction.dart';
+import '../providers/home_tab_provider.dart';
 import '../providers/plan_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../services/billing_service.dart';
@@ -27,7 +28,6 @@ class HomeShell extends ConsumerStatefulWidget {
 }
 
 class _HomeShellState extends ConsumerState<HomeShell> {
-  int _index = 0;
   bool _syncToastShown = false;
 
   @override
@@ -62,8 +62,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           AsyncValue<List<ConnectivityResult>> next) {
         final List<ConnectivityResult>? results = next.value;
         if (results == null) return;
-        final bool online = results.any(
-            (ConnectivityResult r) => r != ConnectivityResult.none);
+        final bool online =
+            results.any((ConnectivityResult r) => r != ConnectivityResult.none);
         if (online) {
           ref.read(syncServiceProvider).syncAll(
             onLocalReplaced: (List<Transaction> txs) {
@@ -81,16 +81,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       const ReportsScreen(),
       const SettingsScreen(),
     ];
+    final int index = ref.watch(homeTabIndexProvider);
 
     return Scaffold(
-      body: IndexedStack(index: _index, children: pages),
+      body: IndexedStack(index: index, children: pages),
       floatingActionButton: _HomeFab(
         onPressed: _openAddSheet,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _BottomNav(
-        currentIndex: _index,
-        onTap: (int i) => setState(() => _index = i),
+        currentIndex: index,
+        onTap: (int i) => ref.read(homeTabIndexProvider.notifier).state = i,
       ),
     );
   }
@@ -155,13 +156,15 @@ class _BottomNav extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget>[
-          _item(0, Icons.dashboard_rounded, Icons.dashboard_outlined, 'الرئيسية'),
+          _item(
+              0, Icons.dashboard_rounded, Icons.dashboard_outlined, 'الرئيسية'),
           _item(1, Icons.savings_rounded, Icons.savings_outlined, 'الميزانيات'),
           const SizedBox(width: 56),
           _item(2, Icons.forum_rounded, Icons.forum_outlined, 'المحاسب الآلي'),
           _item(3, Icons.pie_chart_rounded, Icons.pie_chart_outline_rounded,
               'التقارير'),
-          _item(4, Icons.settings_rounded, Icons.settings_outlined, 'الإعدادات'),
+          _item(
+              4, Icons.settings_rounded, Icons.settings_outlined, 'الإعدادات'),
         ],
       ),
     );

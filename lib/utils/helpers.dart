@@ -1,6 +1,7 @@
 // Formatting & math helpers (Arabic-first, offline-safe).
 
-import 'package:flutter/material.dart' show Color, IconData, Icons, DateTimeRange;
+import 'package:flutter/material.dart'
+    show Color, IconData, Icons, DateTimeRange;
 import 'package:intl/intl.dart';
 
 import '../models/transaction.dart';
@@ -60,8 +61,7 @@ abstract final class Helpers {
       DateFormat('MMMM yyyy', 'ar').format(d);
 
   /// Arabic weekday short name (السبت..الجمعة).
-  static String weekdayName(DateTime d) =>
-      DateFormat('EEEE', 'ar').format(d);
+  static String weekdayName(DateTime d) => DateFormat('EEEE', 'ar').format(d);
 
   // ---------- Period ranges for reports ----------
 
@@ -88,8 +88,8 @@ abstract final class Helpers {
 
   static List<DateTime> monthRange(String monthKey) {
     final DateTime start = monthKeyStart(monthKey);
-    final DateTime end = DateTime(start.year, start.month + 1)
-        .subtract(const Duration(days: 1));
+    final DateTime end =
+        DateTime(start.year, start.month + 1).subtract(const Duration(days: 1));
     return <DateTime>[start, end];
   }
 
@@ -102,8 +102,8 @@ abstract final class Helpers {
   /// Expense totals grouped by category key.
   static Map<String, double> expensesByCategory(Iterable<Transaction> txs) {
     final Map<String, double> out = <String, double>{};
-    for (final Transaction t in txs.where((Transaction t) =>
-        t.type == TxType.expense)) {
+    for (final Transaction t
+        in txs.where((Transaction t) => t.type == TxType.expense)) {
       out[t.category] = (out[t.category] ?? 0) + t.amount;
     }
     return out;
@@ -112,8 +112,8 @@ abstract final class Helpers {
   /// Daily net expense totals for charts.
   static Map<DateTime, double> dailyExpenses(Iterable<Transaction> txs) {
     final Map<DateTime, double> out = <DateTime, double>{};
-    for (final Transaction t in txs
-        .where((Transaction t) => t.type == TxType.expense)) {
+    for (final Transaction t
+        in txs.where((Transaction t) => t.type == TxType.expense)) {
       final DateTime day = DateTime(t.date.year, t.date.month, t.date.day);
       out[day] = (out[day] ?? 0) + t.amount;
     }
@@ -141,32 +141,116 @@ extension CategoryX on String {
     'food': (
       Icons.restaurant_rounded,
       'مطاعم وطعام',
-      <String>['مطعم', 'اكل', 'أكل', 'فطار', 'غدا', 'عشا', 'كافيه', 'قهوة', 'بيتزا', 'برجر', 'شاورما', 'حلويات', 'سوبر ماركت', 'بقالة', 'طلب', 'دليفري']
+      <String>[
+        'مطعم',
+        'اكل',
+        'أكل',
+        'فطار',
+        'غدا',
+        'عشا',
+        'كافيه',
+        'قهوة',
+        'بيتزا',
+        'برجر',
+        'شاورما',
+        'حلويات',
+        'سوبر ماركت',
+        'بقالة',
+        'طلب',
+        'دليفري'
+      ]
     ),
     'transport': (
       Icons.directions_car_rounded,
       'مواصلات',
-      <String>['مواصلات', 'اوبير', 'أوبر', 'كريم', 'تاكسي', 'بنزين', 'وقود', 'مترو', 'باص', 'أتوبيس', 'قطار', 'موقف', 'صيانة عربية', 'كورة']
+      <String>[
+        'مواصلات',
+        'اوبير',
+        'اوبر',
+        'كاريم',
+        'أوبر',
+        'كريم',
+        'تاكسي',
+        'بنزين',
+        'وقود',
+        'مترو',
+        'باص',
+        'أتوبيس',
+        'قطار',
+        'موقف',
+        'صيانة عربية',
+        'كورة'
+      ]
     ),
     'bills': (
       Icons.receipt_long_rounded,
       'فواتير',
-      <String>['فاتورة', 'فواتير', 'كهربا', 'مياه', 'غاز', 'نت', 'انترنت', 'تليفون', 'محصول', 'ايجار', 'إيجار', 'قسط', 'تأمين']
+      <String>[
+        'فاتورة',
+        'فواتير',
+        'كهربا',
+        'مياه',
+        'غاز',
+        'نت',
+        'انترنت',
+        'تليفون',
+        'محصول',
+        'ايجار',
+        'إيجار',
+        'قسط',
+        'تأمين'
+      ]
     ),
     'shopping': (
       Icons.shopping_bag_rounded,
       'تسوق',
-      <String>['ملابس', 'تسوق', 'الحتياجات', 'كتشوة', 'نظارة', 'حذاء', 'شنطة', 'عطر', 'موبايل', 'اكسسوارات']
+      <String>[
+        'ملابس',
+        'تسوق',
+        'الحتياجات',
+        'كتشوة',
+        'نظارة',
+        'حذاء',
+        'شنطة',
+        'عطر',
+        'موبايل',
+        'اكسسوارات'
+      ]
     ),
     'entertainment': (
       Icons.sports_esports_rounded,
       'ترفيه',
-      <String>['سينما', 'فلوجات', 'لعبة', 'العاب', 'ألعاب', 'خروجة', 'سفر', 'نزهة', 'اشتراك', 'نتفلكس', 'يوتيوب', 'شاشة']
+      <String>[
+        'سينما',
+        'فلوجات',
+        'لعبة',
+        'العاب',
+        'ألعاب',
+        'خروجة',
+        'سفر',
+        'نزهة',
+        'اشتراك',
+        'نتفلكس',
+        'يوتيوب',
+        'شاشة'
+      ]
     ),
     'health': (
       Icons.medical_services_rounded,
       'صحة',
-      <String>['دكتور', 'دوا', 'صيدلية', 'علاج', 'تحليل', 'اشعة', 'مستشفى', 'اسنان', 'عيادة', 'جيم', 'نادي']
+      <String>[
+        'دكتور',
+        'دوا',
+        'صيدلية',
+        'علاج',
+        'تحليل',
+        'اشعة',
+        'مستشفى',
+        'اسنان',
+        'عيادة',
+        'جيم',
+        'نادي'
+      ]
     ),
     'education': (
       Icons.school_rounded,
@@ -183,11 +267,7 @@ extension CategoryX on String {
       'ادخار',
       <String>['ادخار', 'توفير', 'حصالة', 'وديعة', 'استثمار', 'ذهب']
     ),
-    'other': (
-      Icons.category_rounded,
-      'أخرى',
-      <String>[]
-    ),
+    'other': (Icons.category_rounded, 'أخرى', <String>[]),
   };
 
   static const Map<String, String> _incomeFallback = <String, String>{

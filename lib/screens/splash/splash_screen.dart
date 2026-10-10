@@ -41,14 +41,14 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final bool seenOnboarding =
-        prefs.getBool(PrefKeys.onboardingSeen) ?? false;
+    final bool seenOnboarding = prefs.getBool(PrefKeys.onboardingSeen) ?? false;
 
     String next = AppRoutes.onboarding;
     if (seenOnboarding) {
       // Ask for biometrics first if the user enabled the lock.
       if (widget.biometricEnabled) {
-        final bool ok = await SecurityService.authenticate('افتح المحاسب الذكي');
+        final bool ok =
+            await SecurityService.authenticate('افتح المحاسب الذكي');
         if (!ok && mounted) {
           // Stay on splash; retry on tap.
           setState(() => _routed = false);

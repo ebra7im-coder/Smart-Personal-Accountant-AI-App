@@ -10,7 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../models/chat_message.dart';
-import '../../models/transaction.dart' show TxType;
+import '../../models/transaction.dart';
 import '../../providers/plan_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../services/ai_service.dart';
@@ -31,12 +31,11 @@ class ChatQuota {
   }
 
   static Future<void> increment() async {
-    await HiveService.put(HiveService.settingsBox,
-        'chat_used_${dayKey()}', usedToday() + 1);
+    await HiveService.put(
+        HiveService.settingsBox, 'chat_used_${dayKey()}', usedToday() + 1);
   }
 
-  static bool get isBlocked =>
-      usedToday() >= freeDailyMessages;
+  static bool get isBlocked => usedToday() >= freeDailyMessages;
 }
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -67,6 +66,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    HiveService.purgeOldChatQuotaKeys(ChatQuota.dayKey());
     _loadHistory();
   }
 
@@ -114,21 +114,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ref.read(monthTotalsProvider).expense,
       ref.read(monthTotalsProvider).balance,
     );
-    final List<dynamic> all = ref.read(transactionListProvider);
+    final List<Transaction> all = ref.read(transactionListProvider);
+    final String mk = Helpers.monthKey(DateTime.now());
     final Map<String, double> byCategory = <String, double>{};
-    for (final dynamic t in all) {
-      if (t.type != TxType.expense) continue;
-      if (t.monthKey() != Helpers.monthKey(DateTime.now())) continue;
-      byCategory[t.category as String] =
-          (byCategory[t.category as String] ?? 0) + (t.amount as double);
+    for (final Transaction t in all) {
+      if (t.type != TxType.expense || t.monthKey() != mk) continue;
+      byCategory[t.category] = (byCategory[t.category] ?? 0) + t.amount;
     }
-    final List<({String title, double amount})> top = all.take(5).map(
-        (dynamic t) => (
-              title: (t.note as String).isEmpty
-                  ? (t.category as String).arLabel
-                  : t.note as String,
-              amount: t.amount as double,
-            )).toList();
+    final List<({String title, double amount})> top = all
+        .where((Transaction t) => t.type == TxType.expense)
+        .take(5)
+        .map((Transaction t) => (
+              title: t.note.isEmpty ? t.category.arLabel : t.note,
+              amount: t.amount,
+            ))
+        .toList();
 
     return AiService.buildTransactionsSummary(
       monthIncome: income,
@@ -147,7 +147,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // Free-plan quota (PRO = unlimited).
     if (!ref.read(isProProvider) && ChatQuota.isBlocked) {
       Fluttertoast.showToast(
-        msg: 'خلصت رسايل الـ AI النهاردة (١٥) — قم بالترقية إلى PRO للمحادثة بلا حدود',
+        msg:
+            'خلصت رسايل الـ AI النهاردة (١٥) — قم بالترقية إلى PRO للمحادثة بلا حدود',
         toastLength: Toast.LENGTH_LONG,
       );
       return;
@@ -187,23 +188,49 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } on AiNotConfiguredException {
       _updatePending(
           'خدمة الـ AI مش مهيأة على الجهاز ده. المطور لازم يضيف مفتاح '
-          'CODECRAFT_API_KEY عند البناء (--dart-define).');
+          'CODECRAFT_API_KEY عند البناء (--dart-define).',
+          isError: true);
     } catch (_) {
-      _updatePending('حصلت مشكلة في الاتصال، جرّب تاني بعد شوية 🙏');
+      _updatePending(
+          'تعذر الاتصال بالذكاء الاصطناعي 😔 — اضغط هنا لإعادة المحاولة',
+          isError: true);
     } finally {
       if (mounted) setState(() => _sending = false);
     }
   }
 
-  void _updatePending(String text) {
+  /// In-memory retry texts for error bubbles (id -> original user message).
+  final Map<String, String> _retryTexts = <String, String>{};
+
+  void _updatePending(String text, {bool isError = false}) {
     final int idx = _messages.indexWhere((ChatMessage m) => m.pending);
     if (idx == -1) return;
     setState(() {
-      _messages[idx] = _messages[idx].copyWith(text: text, pending: false);
+      _messages[idx] =
+          _messages[idx].copyWith(text: text, pending: false, isError: isError);
     });
+    if (isError) _retryTexts[_messages[idx].id] = text;
     HiveService.saveChat(
         _messages.where((ChatMessage m) => m.id != 'welcome').toList());
     _scrollToBottom();
+  }
+
+  /// Tap on an error bubble -> resend the original question.
+  Future<void> _retry(ChatMessage errorMsg) async {
+    final String? question = _retryTexts[errorMsg.id];
+    setState(() {
+      _messages.remove(errorMsg);
+      _retryTexts.remove(errorMsg.id);
+      // Drop the trailing user turn so it is not duplicated.
+      if (_history.isNotEmpty && _history.last.role == 'user') {
+        _history.removeLast();
+      }
+    });
+    if (question == null || question.isEmpty) {
+      Fluttertoast.showToast(msg: 'أعد كتابة رسالتك من فضلك');
+      return;
+    }
+    await _send(question);
   }
 
   // --------------------------------------------------------------- voice
@@ -316,7 +343,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   );
                 }
                 final int idx = _messages.length <= 1 ? i - 1 : i;
-                return _Bubble(message: _messages[idx]);
+                final ChatMessage msg = _messages[idx];
+                return _Bubble(
+                  message: msg,
+                  onTap: msg.isError ? () => _retry(msg) : null,
+                );
               },
             ),
           ),
@@ -336,56 +367,73 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 // ---------------------------------------------------------------------------
 
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message});
+  const _Bubble({required this.message, this.onTap});
 
   final ChatMessage message;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final bool isUser = message.isUser;
     return Align(
-      alignment: isUser ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.78,
-        ),
-        decoration: BoxDecoration(
-          color: isUser ? AppColors.navy : AppColors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isUser ? 16 : 4),
-            bottomRight: Radius.circular(isUser ? 4 : 16),
+      alignment: isUser
+          ? AlignmentDirectional.centerEnd
+          : AlignmentDirectional.centerStart,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.78,
           ),
-          border: isUser ? null : Border.all(color: AppColors.line),
+          decoration: BoxDecoration(
+            color: isUser
+                ? AppColors.navy
+                : (message.isError ? AppColors.redSoft : AppColors.white),
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isUser ? 16 : 4),
+              bottomRight: Radius.circular(isUser ? 4 : 16),
+            ),
+            border: isUser
+                ? null
+                : Border.all(
+                    color: message.isError
+                        ? AppColors.danger.withOpacity(0.4)
+                        : AppColors.line),
+          ),
+          child: message.pending
+              ? const _TypingDots()
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    SelectableText(
+                      message.text,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        height: 1.6,
+                        color: isUser
+                            ? AppColors.white
+                            : (message.isError
+                                ? AppColors.danger
+                                : AppColors.textDark),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      DateFormat('hh:mm a', 'ar').format(message.createdAt),
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: isUser
+                            ? AppColors.white.withOpacity(0.6)
+                            : AppColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
         ),
-        child: message.pending
-            ? const _TypingDots()
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SelectableText(
-                    message.text,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      height: 1.6,
-                      color: isUser ? AppColors.white : AppColors.textDark,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    DateFormat('hh:mm a', 'ar').format(message.createdAt),
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: isUser
-                          ? AppColors.white.withOpacity(0.6)
-                          : AppColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
       ),
     );
   }
@@ -500,8 +548,8 @@ class _InputBar extends StatelessWidget {
                   filled: true,
                   fillColor: AppColors.bg,
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none,
@@ -514,8 +562,7 @@ class _InputBar extends StatelessWidget {
               onTap: onMic,
               child: CircleAvatar(
                 radius: 21,
-                backgroundColor:
-                    listening ? AppColors.green : AppColors.bg,
+                backgroundColor: listening ? AppColors.green : AppColors.bg,
                 child: Icon(
                   listening ? Icons.stop_rounded : Icons.mic_rounded,
                   size: 20,

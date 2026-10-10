@@ -93,8 +93,8 @@ class SyncService {
     final String monthKey = Helpers.monthKey(DateTime.now());
     final String latchKey = '$_latchPrefix:${monthKey}_$category:$percent';
     try {
-      final dynamic already = HiveService.get<dynamic>(
-          HiveService.dataBox, latchKey);
+      final dynamic already =
+          HiveService.get<dynamic>(HiveService.dataBox, latchKey);
       if (already == true) return;
     } catch (_) {
       return;

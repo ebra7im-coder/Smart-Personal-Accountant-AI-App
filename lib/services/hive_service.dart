@@ -50,12 +50,24 @@ abstract final class HiveService {
   }
 
   static Future<List<int>> _loadOrCreateKey() async {
-    final String? stored = await _secure.read(key: _keyName);
+    // Some old Android 6/7 devices throw from the Keystore-backed
+    // EncryptedSharedPreferences — degrade gracefully instead of crashing.
+    String? stored;
+    try {
+      stored = await _secure.read(key: _keyName);
+    } catch (_) {
+      try {
+        await _secure.delete(key: _keyName);
+      } catch (_) {}
+      stored = null;
+    }
     if (stored != null && stored.isNotEmpty) {
       return stored.codeUnits;
     }
     final List<int> key = Hive.generateSecureKey();
-    await _secure.write(key: _keyName, value: String.fromCharCodes(key));
+    try {
+      await _secure.write(key: _keyName, value: String.fromCharCodes(key));
+    } catch (_) {}
     _keyWasGeneratedThisRun = true;
     return key;
   }
@@ -75,9 +87,8 @@ abstract final class HiveService {
 
   static T? get<T>(String boxName, String key) {
     try {
-      final dynamic v = boxName == settingsBox
-          ? _settings.get(key)
-          : _data.get(key);
+      final dynamic v =
+          boxName == settingsBox ? _settings.get(key) : _data.get(key);
       return v is T ? v as T? : null;
     } catch (_) {
       return null;
@@ -102,8 +113,7 @@ abstract final class HiveService {
 
   // ----------------------- transactions -----------------------
 
-  static Future<void> saveTransaction(Transaction tx) =>
-      _txs.put(tx.id, tx);
+  static Future<void> saveTransaction(Transaction tx) => _txs.put(tx.id, tx);
 
   static List<Transaction> loadAllTransactions() => _txs.values.toList();
 
@@ -140,14 +150,12 @@ abstract final class HiveService {
     }
   }
 
-  static int countTransactionsForMonth(String monthKey) => _txs.values
-      .where((Transaction t) => t.monthKey() == monthKey)
-      .length;
+  static int countTransactionsForMonth(String monthKey) =>
+      _txs.values.where((Transaction t) => t.monthKey() == monthKey).length;
 
   // ----------------------- budgets -----------------------
 
-  static Future<void> saveBudget(Budget b) =>
-      _data.put('budget_${b.key}', b);
+  static Future<void> saveBudget(Budget b) => _data.put('budget_${b.key}', b);
 
   static List<Budget> loadBudgets(String monthKey) {
     try {
@@ -160,8 +168,7 @@ abstract final class HiveService {
     }
   }
 
-  static Future<void> deleteBudget(String key) =>
-      _data.delete('budget_$key');
+  static Future<void> deleteBudget(String key) => _data.delete('budget_$key');
 
   // ----------------------- AI chat history -----------------------
 
@@ -183,6 +190,19 @@ abstract final class HiveService {
   }
 
   static Future<void> clearChat() => _data.delete('chat_history');
+
+  /// Removes yesterday-(and-older) chat-quota counters; keeps today's.
+  static Future<void> purgeOldChatQuotaKeys(String keepKey) async {
+    try {
+      final List<String> stale = _settings.keys
+          .whereType<String>()
+          .where((String k) => k.startsWith('chat_used_') && k != keepKey)
+          .toList();
+      for (final String k in stale) {
+        await _settings.delete(k);
+      }
+    } catch (_) {}
+  }
 
   // ----------------------- PRO cache -----------------------
 

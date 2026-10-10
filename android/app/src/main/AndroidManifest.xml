@@ -13,10 +13,9 @@
     <!-- Biometric lock -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
-    <!-- Local notifications: budget 80%/100% alerts -->
+    <!-- Local notifications: budget 80%/100% alerts
+         (no exact alarms / boot receiver needed — Play-policy friendly) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Push notifications (FCM) -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -36,6 +35,7 @@
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:roundIcon="@mipmap/launcher_icon"
+        android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true">
 
         <activity

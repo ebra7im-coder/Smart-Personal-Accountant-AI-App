@@ -39,8 +39,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      final UserCredential cred = await FirebaseAuthService
-          .registerWithEmail(_emailCtrl.text.trim(), _passCtrl.text);
+      final UserCredential cred = await FirebaseAuthService.registerWithEmail(
+          _emailCtrl.text.trim(), _passCtrl.text);
       await FirebaseAuthService.updateDisplayName(_nameCtrl.text.trim());
       final User profile = User(
         uid: cred.user?.uid ?? 'local',

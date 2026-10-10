@@ -75,8 +75,7 @@ class _OcrConfirmScreenState extends ConsumerState<OcrConfirmScreen> {
       source: 'ocr',
     );
 
-    final bool ok =
-        await ref.read(transactionListProvider.notifier).add(tx);
+    final bool ok = await ref.read(transactionListProvider.notifier).add(tx);
     if (!mounted) return;
     if (!ok) {
       Fluttertoast.showToast(
@@ -118,8 +117,7 @@ class _OcrConfirmScreenState extends ConsumerState<OcrConfirmScreen> {
               decoration: BoxDecoration(
                 color: AppColors.greenSoft,
                 borderRadius: BorderRadius.circular(AppSizes.radiusL),
-                border:
-                    Border.all(color: AppColors.green.withOpacity(0.3)),
+                border: Border.all(color: AppColors.green.withOpacity(0.3)),
               ),
               child: Row(
                 children: <Widget>[
@@ -214,7 +212,8 @@ class _OcrConfirmScreenState extends ConsumerState<OcrConfirmScreen> {
 
             // ---- Raw OCR text (collapsible) ----
             Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data:
+                  Theme.of(context).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: EdgeInsets.zero,

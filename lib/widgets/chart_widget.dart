@@ -20,8 +20,8 @@ class MonthlyBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<int> days = List<int>.generate(daysInMonth, (int i) => i + 1);
-    final double maxVal = dailyExpenses.values.fold(
-        10.0, (double m, double v) => v > m ? v : m);
+    final double maxVal =
+        dailyExpenses.values.fold(10.0, (double m, double v) => v > m ? v : m);
 
     return SizedBox(
       height: 180,
@@ -31,12 +31,12 @@ class MonthlyBarChart extends StatelessWidget {
           gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
+            leftTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -103,12 +103,12 @@ class CategoryDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<MapEntry<String, double>> entries =
-        expensesByCategory.entries.toList()
-          ..sort((MapEntry<String, double> a, MapEntry<String, double> b) =>
-              b.value.compareTo(a.value));
-    final double total =
-        entries.fold(0.0, (double s, MapEntry<String, double> e) => s + e.value);
+    final List<MapEntry<String, double>> entries = expensesByCategory.entries
+        .toList()
+      ..sort((MapEntry<String, double> a, MapEntry<String, double> b) =>
+          b.value.compareTo(a.value));
+    final double total = entries.fold(
+        0.0, (double s, MapEntry<String, double> e) => s + e.value);
 
     if (entries.isEmpty || total == 0) {
       return const SizedBox(
@@ -167,8 +167,8 @@ class CategoryDonutChart extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   '${e.key.arLabel} ${Helpers.compact(e.value)}',
-                  style: const TextStyle(
-                      fontSize: 11, color: AppColors.textGrey),
+                  style:
+                      const TextStyle(fontSize: 11, color: AppColors.textGrey),
                 ),
               ],
             );
